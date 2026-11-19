@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Gestión de Filas (M/M/1)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- VISTA 1: LOGIN -->
+  <main id="view-login" class="container center-screen">
+    <div class="card login-card">
+      <h1>Fila Virtual de Atención</h1>
+      <p class="subtitle">Ingresa con tu correo registrado para acceder al sistema.</p>
+      
+      <form id="login-form">
+        <div class="input-group">
+          <label for="email-input">Correo Electrónico</label>
+          <input type="email" id="email-input" placeholder="ejemplo@correo.com" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-login">Ingresar</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- VISTA 2: USUARIO (CLIENTE EN COLA) -->
+  <section id="view-student" class="container hidden">
+    <header class="topbar">
+      <div>
+        <h2 id="student-name">Hola, Usuario</h2>
+        <span class="text-muted" id="student-email"></span>
+      </div>
+      <button class="btn btn-ghost" onclick="logout()">Salir</button>
+    </header>
+
+    <div class="grid-2">
+      <!-- Estado del Servidor -->
+      <div class="card">
+        <h3>Estado del Módulo de Atención</h3>
+        <div id="server-status-badge" class="status-pill available">Disponible</div>
+        <p id="server-status-desc" class="subtitle">El asesor está libre. Puedes solicitar atención inmediata.</p>
+        
+        <div class="input-group" style="margin-top: 1rem;">
+          <label for="select-tramite">Selecciona el trámite:</label>
+          <select id="select-tramite"></select>
+        </div>
+
+        <button id="btn-enqueue" class="btn btn-primary" onclick="handleEnqueue()">
+          Solicitar Atención / Formarse
+        </button>
+      </div>
+
+      <!-- Métricas de Cola del Usuario -->
+      <div class="card metrics-card">
+        <h3>Tu Estado en la Fila</h3>
+        <div id="not-in-queue-msg" class="empty-state">
+          Aún no estás formado en la fila virtual.
+        </div>
+
+        <div id="in-queue-stats" class="hidden">
+          <div class="stat-box">
+            <span class="stat-label">Número en la fila</span>
+            <span class="stat-value" id="stat-position">-</span>
+          </div>
+          <div class="stat-row">
+            <div class="stat-box">
+              <span class="stat-label">Tiempo estimado</span>
+              <span class="stat-value-sm" id="stat-estimated">0 min</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Contador regresivo</span>
+              <span class="stat-value-sm timer" id="stat-countdown">00:00</span>
+            </div>
+          </div>
+          <p id="overtime-alert" class="alert-text hidden">
+            El tiempo estimado venció. Recalculando tiempo con el servidor...
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISTA 3: RECURSO (SERVIDOR FIFO) -->
+  <section id="view-resource" class="container hidden">
+    <header class="topbar">
+      <div>
+        <h2 id="resource-name">Panel de Atención (Servidor)</h2>
+        <span class="badge">Disciplina: FIFO</span>
+      </div>
+      <button class="btn btn-ghost" onclick="logout()">Salir</button>
+    </header>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Solicitudes en Espera</h3>
+        <button class="btn btn-secondary btn-sm" onclick="refreshData()">Actualizar Fila</button>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Orden</th>
+              <th>ID Transacción</th>
+              <th>Usuario</th>
+              <th>Hora Llegada</th>
+              <th>Tiempo Est.</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="fifo-table-body">
+            <!-- Filas dinámicas -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL DE ERROR DE LOGIN -->
+  <div id="modal-error" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3>Acceso Denegado</h3>
+      <p id="modal-error-msg">El correo ingresado no existe en la tabla de usuarios.</p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeModal('modal-error')">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE ATENCIÓN (LIBERAR USUARIO) -->
+  <div id="modal-attention" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="badge">En Atención Activa</div>
+      <h3 id="attending-user-title">Atendiendo a usuario</h3>
+      <p class="subtitle">ID Transacción: <strong id="attending-tx-id"></strong></p>
+      <div class="timer-display" id="active-service-timer">00:00</div>
+      <p class="text-muted">Al finalizar el trámite, presiona el botón para liberar al usuario y registrar el tiempo real de servicio ($\mu$).</p>
+      <div class="modal-actions">
+        <button class="btn btn-success" id="btn-finish-attention" onclick="handleFinishAttention()">
+          Liberar Usuario y Continuar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
